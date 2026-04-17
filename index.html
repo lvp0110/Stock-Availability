@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sylomer Stock & Availability</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./vendor/xlsx.full.min.js"></script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Sylomer/Sylodyn: загрузка остатков 1С</h1>
+      <section class="card">
+        <div class="one-card">
+          <div>
+            <label for="fileInput" class="label"
+              >Файлы Excel (.xlsx, .xls)</label
+            >
+            <input id="fileInput" type="file" accept=".xlsx,.xls" multiple />
+          </div>
+          <div class="inline-controls">
+            <label for="localFileSelect" class="label"
+              >Локальные файлы из папки проекта</label
+            >
+            <select id="localFileSelect" multiple size="4"></select>
+            <button id="calculateLocalBtn" type="button">
+              Рассчитать по выбранным локальным файлам
+            </button>
+          </div>
+        </div>
+        <p class="hint">
+          Конвертация единиц:
+          <code>пог. м → м² × 1.5</code>, <code>лист → м² × 1.2</code>.
+        </p>
+      </section>
+      <section class="card">
+        <div id="messages" class="messages" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>Результат</h2>
+        <div class="table-wrap">
+          <table id="resultTable">
+            <thead>
+              <tr>
+                <th>Артикул</th>
+                <th>Номенклатура</th>
+                <th>В наличии, м²</th>
+                <th>В резерве, м²</th>
+                <th class="available-col">Доступно, м²</th>
+                <th>К обеспечению, м²</th>
+                <th>Дефицит, м²</th>
+                <th>Страховой запас, м²</th>
+              </tr>
+            </thead>
+            <tbody id="resultBody">
+              <tr>
+                <td colspan="8" class="placeholder">
+                  Пока нет данных. Загрузите хотя бы один файл.
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr id="totalRow">
+                <td colspan="2">Итого</td>
+                <td class="total-neutral">0.00</td>
+                <td class="total-neutral">0.00</td>
+                <td class="available-col">0.00</td>
+                <td>0.00</td>
+                <td>0.00</td>
+                <td>0.00</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

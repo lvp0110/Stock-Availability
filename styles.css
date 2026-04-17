@@ -1,0 +1,161 @@
+:root {
+  color-scheme: light;
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --line: #d1d5db;
+  --accent: #2563eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.container {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.subtitle {
+  margin: 0 0 20px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.one-card {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  gap: 12px;
+}
+
+.one-card > div {
+  width: 100%;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+input[type="file"] {
+  margin-bottom: 10px;
+}
+
+.inline-controls {
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+select {
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+button {
+  width: fit-content;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(0.95);
+}
+
+.hint {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.messages {
+  /* margin-top: 10px; */
+  color: var(--muted);
+  min-height: 1.2em;
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 980px;
+}
+
+th,
+td {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #eff6ff;
+}
+
+tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.deficit-row,
+tbody tr.deficit-row:nth-child(even) {
+  background: #fee2e2;
+}
+
+.placeholder {
+  text-align: center;
+  color: var(--muted);
+}
+
+tfoot td {
+  font-weight: 700;
+  background: #eef2ff;
+}
+
+.available-col {
+  color: #15803d;
+}
+
+.deficit-positive {
+  color: #b91c1c;
+}
+
+.total-neutral {
+  color: #111827;
+}
