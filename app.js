@@ -91,45 +91,36 @@ async function parseFile(file) {
 
 function parseWorkbookBuffer(buffer, sourceName) {
   const workbook = XLSX.read(buffer, { type: "array" });
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-  const raw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+  const parsed = [];
+  let foundHeader = false;
 
-  const headerIndex = findHeaderIndex(raw);
-  if (headerIndex === -1) {
-    throw new Error(`В файле ${sourceName} не найдена строка заголовков.`);
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName];
+    const raw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+    const headerIndexes = findHeaderIndexes(raw);
+
+    for (let i = 0; i < headerIndexes.length; i += 1) {
+      const headerIndex = headerIndexes[i];
+      const nextHeaderIndex = headerIndexes[i + 1] ?? raw.length;
+      const header = raw[headerIndex].map((cell) => normalizeText(cell));
+      const columnIndexes = getColumnIndexes(header);
+
+      if (!hasAllRequiredColumns(columnIndexes)) {
+        continue;
+      }
+
+      foundHeader = true;
+      const dataRows = raw.slice(headerIndex + 1, nextHeaderIndex);
+      parsed.push(...parseDataRows(dataRows, columnIndexes, sourceName, sheetName));
+    }
   }
 
-  const header = raw[headerIndex].map((cell) => normalizeText(cell));
-  const columnIndexes = getColumnIndexes(header);
-
-  validateRequiredColumns(sourceName, columnIndexes);
-
-  const dataRows = raw.slice(headerIndex + 1);
-  const parsed = [];
-
-  for (const row of dataRows) {
-    const article = getCell(row, columnIndexes.article);
-    const name = getCell(row, columnIndexes.name);
-    const unit = normalizeText(getCell(row, columnIndexes.unit)).toLowerCase();
-
-    if (!isProductRow(article, name, unit)) {
-      continue;
-    }
-
-    const factor = getUnitFactor(unit, name);
-    parsed.push({
-      source: sourceName,
-      article: safeText(article),
-      name: safeText(name),
-      unit: safeText(unit || "не определено"),
-      inStock: toSquareMeters(getCell(row, columnIndexes.inStock), factor),
-      reserved: toSquareMeters(getCell(row, columnIndexes.reserved), factor),
-      available: toSquareMeters(getCell(row, columnIndexes.available), factor),
-      toSupply: toSquareMeters(getCell(row, columnIndexes.toSupply), factor),
-      deficit: toSquareMeters(getCell(row, columnIndexes.deficit), factor),
-      safetyStock: toSquareMeters(getCell(row, columnIndexes.safetyStock), factor),
-    });
+  if (!foundHeader) {
+    throw new Error(
+      `В файле ${sourceName} не найдены таблицы с обязательными колонками (${Object.values(
+        REQUIRED_COLUMNS
+      ).join(", ")}).`
+    );
   }
 
   return parsed;
@@ -193,11 +184,15 @@ function updateUploadCardIndicator(isExpanded) {
   uploadCardIndicator.textContent = isExpanded ? "▾" : "▸";
 }
 
-function findHeaderIndex(rows) {
-  return rows.findIndex((row) => {
+function findHeaderIndexes(rows) {
+  const indexes = [];
+  rows.forEach((row, index) => {
     const normalized = row.map((cell) => normalizeText(cell));
-    return normalized.includes("Артикул") && normalized.includes("Номенклатура");
+    if (normalized.includes("Артикул") && normalized.includes("Номенклатура")) {
+      indexes.push(index);
+    }
   });
+  return indexes;
 }
 
 function getColumnIndexes(header) {
@@ -235,6 +230,38 @@ function validateRequiredColumns(fileName, indexes) {
       `Файл ${fileName}: отсутствуют обязательные колонки: ${missing.join(", ")}`
     );
   }
+}
+
+function hasAllRequiredColumns(indexes) {
+  return Object.values(indexes).every((index) => index >= 0);
+}
+
+function parseDataRows(dataRows, columnIndexes, sourceName, sheetName) {
+  const parsed = [];
+  for (const row of dataRows) {
+    const article = getCell(row, columnIndexes.article);
+    const name = getCell(row, columnIndexes.name);
+    const unit = normalizeText(getCell(row, columnIndexes.unit)).toLowerCase();
+
+    if (!isProductRow(article, name, unit)) {
+      continue;
+    }
+
+    const factor = getUnitFactor(unit, name);
+    parsed.push({
+      source: `${sourceName} / ${sheetName}`,
+      article: safeText(article),
+      name: safeText(name),
+      unit: safeText(unit || "не определено"),
+      inStock: toSquareMeters(getCell(row, columnIndexes.inStock), factor),
+      reserved: toSquareMeters(getCell(row, columnIndexes.reserved), factor),
+      available: toSquareMeters(getCell(row, columnIndexes.available), factor),
+      toSupply: toSquareMeters(getCell(row, columnIndexes.toSupply), factor),
+      deficit: toSquareMeters(getCell(row, columnIndexes.deficit), factor),
+      safetyStock: toSquareMeters(getCell(row, columnIndexes.safetyStock), factor),
+    });
+  }
+  return parsed;
 }
 
 function isProductRow(article, name, unit) {
@@ -320,8 +347,8 @@ function formatNumber(value) {
 function renderTable(rows) {
   if (!rows.length) {
     resultBody.innerHTML =
-      '<tr><td colspan="8" class="placeholder">Не найдено строк с материалами.</td></tr>';
-    updateTotalRow([0, 0, 0, 0, 0, 0]);
+      '<tr><td colspan="9" class="placeholder">Не найдено строк с материалами.</td></tr>';
+    updateTotalRow(totalRow, [0, 0, 0, 0, 0, 0]);
     return;
   }
 
@@ -336,8 +363,13 @@ function renderTable(rows) {
 
   resultBody.innerHTML = sortedRows
     .map(
-      (row) => `
+      (row) => {
+        const materialColor = getMaterialColorHex(row);
+        const colorCellStyle = materialColor ? ` style="background-color:${materialColor}"` : "";
+
+        return `
       <tr class="${row.deficit > 0 ? "deficit-row" : ""}">
+        <td class="color-cell"${colorCellStyle}></td>
         <td>${escapeHtml(row.article)}</td>
         <td>${escapeHtml(row.name)}</td>
         <td>${formatNumber(row.inStock)}</td>
@@ -347,7 +379,8 @@ function renderTable(rows) {
         <td class="${row.deficit > 0 ? "deficit-positive" : ""}">${formatNumber(row.deficit)}</td>
         <td>${formatNumber(row.safetyStock)}</td>
       </tr>
-    `
+    `;
+      }
     )
     .join("");
 
@@ -364,10 +397,10 @@ function renderTable(rows) {
     [0, 0, 0, 0, 0, 0]
   );
 
-  updateTotalRow(totals);
+  updateTotalRow(totalRow, totals);
 }
-function updateTotalRow(totals) {
-  const cells = totalRow.querySelectorAll("td");
+function updateTotalRow(targetRow, totals) {
+  const cells = targetRow.querySelectorAll("td");
   for (let i = 0; i < totals.length; i += 1) {
     cells[i + 1].textContent = formatNumber(totals[i]);
   }
@@ -396,4 +429,35 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function getMaterialColorHex(row) {
+  const text = `${safeText(row.name)} ${safeText(row.article)}`.toLowerCase();
+
+  const colorByKeyword = [
+    // Match explicit color words from source description first.
+    { re: /yellow|желт/i, hex: "#facc15" },
+    { re: /brown|коричнев/i, hex: "#8b5a2b" },
+    { re: /orange|оранж/i, hex: "#f97316" },
+    { re: /red|красн/i, hex: "#dc2626" },
+    { re: /blue|син/i, hex: "#2563eb" },
+    { re: /pink|розов/i, hex: "#ec4899" },
+    { re: /green|зелен/i, hex: "#16a34a" },
+    { re: /grey|gray|сер/i, hex: "#6b7280" },
+    { re: /black|черн/i, hex: "#111827" },
+    // Fallback by material code if color words are missing.
+    { re: /\b(sr ?11|ср ?11)\b/, hex: "#facc15" },
+    { re: /\b(sr ?110|ср ?110)\b/, hex: "#8b5a2b" },
+    { re: /\b(sr ?18|ср ?18)\b/, hex: "#f97316" },
+    { re: /\b(sr ?220|ср ?220)\b/, hex: "#dc2626" },
+    { re: /\b(sr ?28|ср ?28)\b/, hex: "#2563eb" },
+    { re: /\b(sr ?42|ср ?42)\b/, hex: "#ec4899" },
+    { re: /\b(sr ?55|ср ?55)\b/, hex: "#16a34a" },
+    { re: /\b(sr ?330|ср ?330)\b/, hex: "#111827" },
+    { re: /\b(sr ?450|ср ?450)\b/, hex: "#6b7280" },
+    { re: /\b(sd\b|sylodyn)\b|purple|фиолет/i, hex: "#7c3aed" },
+  ];
+
+  const matched = colorByKeyword.find((item) => item.re.test(text));
+  return matched?.hex ?? "";
 }

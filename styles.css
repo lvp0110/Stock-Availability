@@ -35,6 +35,11 @@ h2 {
   font-size: 20px;
 }
 
+h3 {
+  margin: 14px 0 10px;
+  font-size: 16px;
+}
+
 .subtitle {
   margin: 0 0 20px;
   color: var(--muted);
@@ -167,6 +172,12 @@ th {
   background: #eff6ff;
 }
 
+th:first-child,
+td.color-cell {
+  width: 52px;
+  min-width: 52px;
+}
+
 tbody tr:nth-child(even) {
   background: #fafafa;
 }
@@ -196,4 +207,8 @@ tfoot td {
 
 .total-neutral {
   color: #111827;
+}
+
+td.color-cell {
+  padding: 0;
 }
