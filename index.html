@@ -11,33 +11,44 @@
   <body>
     <main class="container">
       <h1>Sylomer/Sylodyn: загрузка остатков 1С</h1>
-      <section class="card">
-        <div class="one-card">
-          <div>
-            <label for="fileInput" class="label"
-              >Файлы Excel (.xlsx, .xls)</label
-            >
-            <input id="fileInput" type="file" accept=".xlsx,.xls" multiple />
+      <section class="card collapsible-card" id="uploadCard">
+        <button
+          type="button"
+          id="uploadCardToggle"
+          class="card-toggle"
+          aria-expanded="false"
+          aria-controls="uploadCardContent"
+        >
+          <span>Загрузка файлов</span>
+          <span class="toggle-indicator" aria-hidden="true">□</span>
+        </button>
+        <div id="uploadCardContent" class="card-content is-collapsed">
+          <div class="one-card">
+            <div>
+              <label for="fileInput" class="label"
+                >Файлы Excel (.xlsx, .xls)</label
+              >
+              <input id="fileInput" type="file" accept=".xlsx,.xls" multiple />
+            </div>
+            <div class="inline-controls">
+              <label for="localFileSelect" class="label"
+                >Локальные файлы из папки проекта</label
+              >
+              <select id="localFileSelect" multiple size="4"></select>
+              <button id="calculateLocalBtn" type="button">
+                Рассчитать по выбранным локальным файлам
+              </button>
+            </div>
           </div>
-          <div class="inline-controls">
-            <label for="localFileSelect" class="label"
-              >Локальные файлы из папки проекта</label
-            >
-            <select id="localFileSelect" multiple size="4"></select>
-            <button id="calculateLocalBtn" type="button">
-              Рассчитать по выбранным локальным файлам
-            </button>
-          </div>
+          <p class="hint">
+            Конвертация единиц:
+            <code>пог. м → м² × 1.5</code>, <code>лист → м² × 1.2</code>.
+          </p>
         </div>
-        <p class="hint">
-          Конвертация единиц:
-          <code>пог. м → м² × 1.5</code>, <code>лист → м² × 1.2</code>.
-        </p>
       </section>
       <section class="card">
-        <div id="messages" class="messages" aria-live="polite"></div>
+        <div id="messages" class="messages" aria-live="polite"></div> 
       </section>
-
       <section class="card">
         <h2>Результат</h2>
         <div class="table-wrap">

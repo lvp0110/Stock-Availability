@@ -58,6 +58,44 @@ h2 {
   margin-bottom: 16px;
 }
 
+.collapsible-card {
+  padding: 0;
+}
+
+.card-toggle {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 16px;
+}
+
+.toggle-indicator {
+  color: #9ca3af;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.card-toggle[aria-expanded="true"] .toggle-indicator {
+  color: #16a34a;
+}
+
+.card-content {
+  padding: 0 16px 16px;
+}
+
+.card-content.is-collapsed {
+  display: none;
+}
+
 .label {
   display: block;
   font-weight: 600;

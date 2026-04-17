@@ -4,6 +4,10 @@ const calculateLocalBtn = document.getElementById("calculateLocalBtn");
 const resultBody = document.getElementById("resultBody");
 const totalRow = document.getElementById("totalRow");
 const messages = document.getElementById("messages");
+const messagesCard = messages?.closest(".card");
+const uploadCardToggle = document.getElementById("uploadCardToggle");
+const uploadCardContent = document.getElementById("uploadCardContent");
+const uploadCardIndicator = uploadCardToggle?.querySelector(".toggle-indicator");
 
 const REQUIRED_COLUMNS = {
   article: "Артикул",
@@ -18,6 +22,8 @@ const REQUIRED_COLUMNS = {
 };
 
 initLocalFilesSelect();
+initUploadCardToggle();
+toggleMessagesCardVisibility("");
 
 fileInput.addEventListener("change", async (event) => {
   const files = Array.from(event.target.files || []);
@@ -70,7 +76,7 @@ calculateLocalBtn.addEventListener("click", async () => {
       allRows.push(...rows);
     }
     renderTable(allRows);
-    setMessage(`Готово. Загружено строк: ${allRows.length}`);
+    setMessage(`Загружено строк: ${allRows.length}`);
   } catch (error) {
     setMessage(
       `Ошибка: ${error.message}. Для локального списка используйте запуск через http://localhost (python3 -m http.server).`
@@ -164,6 +170,27 @@ async function initLocalFilesSelect() {
     localFileSelect.innerHTML =
       '<option value="">Не удалось загрузить список (запустите через http://localhost)</option>';
   }
+}
+
+function initUploadCardToggle() {
+  if (!uploadCardToggle || !uploadCardContent) {
+    return;
+  }
+
+  updateUploadCardIndicator(false);
+
+  uploadCardToggle.addEventListener("click", () => {
+    const isCollapsed = uploadCardContent.classList.toggle("is-collapsed");
+    uploadCardToggle.setAttribute("aria-expanded", String(!isCollapsed));
+    updateUploadCardIndicator(!isCollapsed);
+  });
+}
+
+function updateUploadCardIndicator(isExpanded) {
+  if (!uploadCardIndicator) {
+    return;
+  }
+  uploadCardIndicator.textContent = isExpanded ? "▾" : "▸";
 }
 
 function findHeaderIndex(rows) {
@@ -350,7 +377,16 @@ function updateTotalRow(totals) {
 }
 
 function setMessage(text) {
-  messages.textContent = text;
+  const nextText = String(text ?? "").trim();
+  messages.textContent = nextText;
+  toggleMessagesCardVisibility(nextText);
+}
+
+function toggleMessagesCardVisibility(text) {
+  if (!messagesCard) {
+    return;
+  }
+  messagesCard.hidden = !text;
 }
 
 function escapeHtml(text) {
