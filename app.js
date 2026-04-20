@@ -361,13 +361,13 @@ function getToOrderDetails(row) {
   }
 
   const thickness = detectMaterialThicknessMm(row);
-  if (thickness === 12,5) {
+  if (thickness === "12,5") {
     return {
       value: roundUpToInteger((row.deficit / 76) * 1.2),
       formula: "Округление вверх: ceil((Дефицит / 76) * 1.2)",
     };
   }
-  if (thickness === 25) {
+  if (thickness === "25") {
     return {
       value: roundUpToInteger((row.deficit / 38) * 1.2),
       formula: "Округление вверх: ceil((Дефицит / 38) * 1.2)",
@@ -381,15 +381,12 @@ function getToOrderDetails(row) {
 }
 
 function detectMaterialThicknessMm(row) {
-  const text = `${safeText(row.name)} ${safeText(row.article)}`
-    .toLowerCase()
-    .replace(",", ".");
-  const match = text.match(/(?:^|[^\d])(12\.5|25)(?:\s*мм|\b)/);
+  const text = `${safeText(row.name)} ${safeText(row.article)}`.toLowerCase();
+  const match = text.match(/(?:^|[^\d])(12[.,]5|25)(?:\s*мм|\b)/);
   if (!match) {
     return null;
   }
-  const parsed = Number.parseFloat(match[1]);
-  return Number.isFinite(parsed) ? parsed : null;
+  return match[1].replace(".", ",");
 }
 
 function renderTable(rows) {
