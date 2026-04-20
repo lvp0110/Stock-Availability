@@ -20,7 +20,7 @@ body {
 }
 
 .container {
-  max-width: 1320px;
+  /* max-width: 1320px; */
   margin: 0 auto;
   padding: 24px;
 }
@@ -51,7 +51,14 @@ h3 {
   width: 100%;
   gap: 12px;
 }
-
+@media (max-width: 768px) {
+  .one-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+}
 .one-card > div {
   width: 100%;
 }
@@ -211,4 +218,140 @@ tfoot td {
 
 td.color-cell {
   padding: 0;
+}
+
+@media (max-width: 1069px) {
+  .table-wrap {
+    overflow: visible;
+  }
+
+  table {
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  thead,
+  tfoot {
+    display: none;
+  }
+
+  tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  tbody tr {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #fff;
+  }
+
+  tbody tr.deficit-row,
+  tbody tr.deficit-row:nth-child(even) {
+    border-color: #fca5a5;
+    background: #fff7f7 !important;
+  }
+
+  tbody tr.deficit-row td {
+    background: #fff7f7 !important;
+  }
+
+  tbody td {
+    display: grid;
+    grid-template-columns: minmax(120px, 42%) 1fr;
+    gap: 8px;
+    border: 0;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 12px;
+    align-items: center;
+  }
+
+  tbody td:last-child {
+    border-bottom: 0;
+  }
+
+  tbody td::before {
+    content: "";
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  tbody td:nth-child(1)::before {
+    content: "Цвет";
+  }
+
+  tbody td:nth-child(2)::before {
+    content: "Артикул";
+  }
+
+  tbody td:nth-child(3)::before {
+    content: "Номенклатура";
+  }
+
+  tbody td:nth-child(4)::before {
+    content: "В наличии, м2";
+  }
+
+  tbody td:nth-child(5)::before {
+    content: "В резерве, м2";
+  }
+
+  tbody td:nth-child(6)::before {
+    content: "Доступно, м2";
+  }
+
+  tbody td:nth-child(7)::before {
+    content: "К обеспечению, м2";
+  }
+
+  tbody td:nth-child(8)::before {
+    content: "Дефицит, м2";
+  }
+
+  tbody td:nth-child(9)::before {
+    content: "Страховой запас, м2";
+  }
+
+  tbody td:nth-child(10)::before {
+    content: "К заказу, м2";
+  }
+
+  tbody td.color-cell {
+    min-height: 26px;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 12px;
+    background: transparent !important;
+  }
+
+  tbody tr.deficit-row td.color-cell {
+    background: #fff7f7 !important;
+  }
+
+  tbody td.color-cell::after {
+    content: "";
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid rgba(17, 24, 39, 0.15);
+    background: var(--color-cell-bg, transparent);
+    display: block;
+  }
+
+  tbody td.placeholder {
+    display: block;
+    text-align: center;
+    border: 0;
+    padding: 16px;
+  }
+
+  tbody td.placeholder::before {
+    content: none;
+  }
 }

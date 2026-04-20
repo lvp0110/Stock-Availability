@@ -206,6 +206,7 @@ function getColumnIndexes(header) {
       ? header.findLastIndex((h) => h === REQUIRED_COLUMNS.available)
       : findLastIndexFallback(header, REQUIRED_COLUMNS.available),
     toSupply: header.findIndex((h) => h === REQUIRED_COLUMNS.toSupply),
+    toOrder: header.findIndex((h) => h === "К заказу"),
     deficit: header.findIndex((h) => h === REQUIRED_COLUMNS.deficit),
     safetyStock: header.findIndex((h) => h === REQUIRED_COLUMNS.safetyStock),
   };
@@ -233,7 +234,7 @@ function validateRequiredColumns(fileName, indexes) {
 }
 
 function hasAllRequiredColumns(indexes) {
-  return Object.values(indexes).every((index) => index >= 0);
+  return Object.keys(REQUIRED_COLUMNS).every((key) => indexes[key] >= 0);
 }
 
 function parseDataRows(dataRows, columnIndexes, sourceName, sheetName) {
@@ -257,6 +258,7 @@ function parseDataRows(dataRows, columnIndexes, sourceName, sheetName) {
       reserved: toSquareMeters(getCell(row, columnIndexes.reserved), factor),
       available: toSquareMeters(getCell(row, columnIndexes.available), factor),
       toSupply: toSquareMeters(getCell(row, columnIndexes.toSupply), factor),
+      toOrder: toSquareMeters(getCell(row, columnIndexes.toOrder), factor),
       deficit: toSquareMeters(getCell(row, columnIndexes.deficit), factor),
       safetyStock: toSquareMeters(getCell(row, columnIndexes.safetyStock), factor),
     });
@@ -344,11 +346,57 @@ function formatNumber(value) {
   });
 }
 
+function getToOrderValue(row) {
+  return getToOrderDetails(row).value;
+}
+
+function getToOrderDetails(row) {
+  const roundUpToInteger = (value) => Math.ceil(value);
+
+  if (row.deficit <= 0) {
+    return {
+      value: roundUpToInteger(row.toOrder),
+      formula: "Округление вверх: ceil(К заказу из файла)",
+    };
+  }
+
+  const thickness = detectMaterialThicknessMm(row);
+  if (thickness === 12,5) {
+    return {
+      value: roundUpToInteger((row.deficit / 76) * 1.2),
+      formula: "Округление вверх: ceil((Дефицит / 76) * 1.2)",
+    };
+  }
+  if (thickness === 25) {
+    return {
+      value: roundUpToInteger((row.deficit / 38) * 1.2),
+      formula: "Округление вверх: ceil((Дефицит / 38) * 1.2)",
+    };
+  }
+
+  return {
+    value: roundUpToInteger(row.toOrder),
+    formula: "Толщина не распознана: округление вверх исходного К заказу",
+  };
+}
+
+function detectMaterialThicknessMm(row) {
+  const text = `${safeText(row.name)} ${safeText(row.article)}`
+    .toLowerCase()
+    .replace(",", ".");
+  const match = text.match(/(?:^|[^\d])(12\.5|25)(?:\s*мм|\b)/);
+  if (!match) {
+    return null;
+  }
+  const parsed = Number.parseFloat(match[1]);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function renderTable(rows) {
   if (!rows.length) {
     resultBody.innerHTML =
-      '<tr><td colspan="9" class="placeholder">Не найдено строк с материалами.</td></tr>';
-    updateTotalRow(totalRow, [0, 0, 0, 0, 0, 0]);
+      '<tr><td colspan="10" class="placeholder">Не найдено строк с материалами.</td></tr>';
+    updateTotalRow(totalRow, [0, 0, 0, 0, 0, 0, 0]);
     return;
   }
 
@@ -364,8 +412,11 @@ function renderTable(rows) {
   resultBody.innerHTML = sortedRows
     .map(
       (row) => {
+        const toOrderDetails = getToOrderDetails(row);
         const materialColor = getMaterialColorHex(row);
-        const colorCellStyle = materialColor ? ` style="background-color:${materialColor}"` : "";
+        const colorCellStyle = materialColor
+          ? ` style="--color-cell-bg:${materialColor};background-color:${materialColor}"`
+          : "";
 
         return `
       <tr class="${row.deficit > 0 ? "deficit-row" : ""}">
@@ -378,6 +429,7 @@ function renderTable(rows) {
         <td>${formatNumber(row.toSupply)}</td>
         <td class="${row.deficit > 0 ? "deficit-positive" : ""}">${formatNumber(row.deficit)}</td>
         <td>${formatNumber(row.safetyStock)}</td>
+        <td title="${escapeHtml(toOrderDetails.formula)}">${formatNumber(toOrderDetails.value)}</td>
       </tr>
     `;
       }
@@ -392,9 +444,10 @@ function renderTable(rows) {
       acc[3] += row.toSupply;
       acc[4] += row.deficit;
       acc[5] += row.safetyStock;
+      acc[6] += getToOrderValue(row);
       return acc;
     },
-    [0, 0, 0, 0, 0, 0]
+    [0, 0, 0, 0, 0, 0, 0]
   );
 
   updateTotalRow(totalRow, totals);
